@@ -96,7 +96,6 @@ if ($ONEDRIVESYNC) {
         #Aanmaken van de mappen in OneDrive
         Set-KnownFolderPath -KnownFolder 'Desktop' -Path "$ONEDRIVESYNC\Desktop"
         Set-KnownFolderPath -KnownFolder 'Documents' -Path "$ONEDRIVESYNC\Documents"
-        Set-KnownFolderPath -KnownFolder 'Downloads' -Path "$ONEDRIVESYNC\Downloads"
         Set-KnownFolderPath -KnownFolder 'Pictures' -Path "$ONEDRIVESYNC\Pictures"
         Set-KnownFolderPath -KnownFolder 'Favorites' -Path "$ONEDRIVESYNC\Favorites"
         Set-KnownFolderPath -KnownFolder 'Videos' -Path "$ONEDRIVESYNC\Videos"
