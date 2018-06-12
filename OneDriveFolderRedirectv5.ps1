@@ -1,4 +1,4 @@
-﻿#region functions
+
 function Set-KnownFolderPath {
     Param (
             [Parameter(Mandatory = $true)]
@@ -74,7 +74,6 @@ Function Log {
 		}
 }
 
-#endregion 
 
 #Aanmaken van map C:\PPC_Logs (als deze nog niet bestaat) waar de logs worden weggeschreven.
 $strPPC_LOG = "C:\Program Files\PeopleWare\PPC_Logs"
