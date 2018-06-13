@@ -1,4 +1,4 @@
-﻿Function Log {
+Function Log {
 	<#
 	.EXAMPLE
 		Log -Message "Test server" -Type "i"
