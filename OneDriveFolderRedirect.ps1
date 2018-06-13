@@ -75,6 +75,7 @@ Function Log {
 }
 
 
+
 #Aanmaken van map C:\PPC_Logs (als deze nog niet bestaat) waar de logs worden weggeschreven.
 $strPPC_LOG = "C:\Program Files\PeopleWare\PPC_Logs"
 $strPPC_LOG_Onedrive = $strPPC_LOG + "\" + "OneDrive Install.txt" 
@@ -84,8 +85,18 @@ if(-not(Test-Path $strPPC_LOG)) {
     New-Item $strPPC_LOG -ItemType container
 }
 
+
 #Kijken of OneDrive al is ingericht d.m.v. de andere scriptjes. Als dat niet zo is dan failed hij waardoor Intune hem later weer opnieuw afvuurt aangezien dan wellicht wel de andere scriptjes hebben gedraaid.
-$ONEDRIVESYNC = Get-ItemPropertyValue -Path 'HKCU:\Software\Microsoft\OneDrive\Accounts\Business1' -Name 'UserFolder'
+$Notdone = $true
+
+DO {
+    $ONEDRIVESYNC = Get-ItemPropertyValue -Path 'HKCU:\Software\Microsoft\OneDrive\Accounts\Business1' -Name 'UserFolder'
+
+    if ($ONEDRIVESYNC)  {
+        $Notdone = $false
+    }
+} While ($Notdone)
+
 
 if ($ONEDRIVESYNC) {
     #Als de gebruiker al een keer succesvol OneDrive heeft ingericht en dus de mappen al heeft met eventueel data erin dan zou hij normaal gesproken failen. Maar door onderstaande stuk code 
