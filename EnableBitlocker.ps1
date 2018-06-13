@@ -27,8 +27,15 @@ Try {
     Enable-BitLocker -MountPoint "C:" -EncryptionMethod XtsAes128 -ErrorAction stop -UsedSpaceOnly -RecoveryPasswordProtector -SkipHardwareTest
     $BLV = Get-BitLockerVolume -MountPoint “C:” | select *
     $BackupPassword = $BLV.KeyProtector |Where {$_.KeyProtectorType -eq ‘RecoveryPassword’}
-    BackupToAAD-BitLockerKeyProtector -MountPoint “C:” -KeyProtectorId $BackupPassword.KeyProtectorId -ErrorAction Stop
-    Log -Message "Bitlocker geconfigureerd. Op de achtergrond zal hij gaan encrypten." -Type "ok" 
+    BackupToAAD-BitLockerKeyProtector -MountPoint “C:” -KeyProtectorId $BackupPassword.KeyProtectorId -ErrorAction SilentlyContinue
+    
+    $bitlockerStatus = Get-BitLockerVolume $env:SystemDrive -ErrorAction Stop | select -ExpandProperty VolumeStatus
+    if ($bitlockerStatus -eq "EncryptionInProgress" -or $bitlockerStatus -eq "FullyEncrypted") { 
+        Log -Message "Bitlocker geconfigureerd. Op de achtergrond zal hij gaan encrypten." -Type "ok"
+    } else {
+        Log -Message "Hij heeft een andere status dan fullyencrypted of encryptioninprogress. Status: $bitlockerStatus." -Type "ok"
+    }
+
 } Catch {
     $strFoutmelding = $error[0]
     Log -Message "Fout bij automatisch configureren van Bitlocker. Foutmelding: $strFoutmelding" -Type "error" 
