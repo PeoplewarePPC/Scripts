@@ -29,6 +29,8 @@ Try {
     $BackupPassword = $BLV.KeyProtector |Where {$_.KeyProtectorType -eq ‘RecoveryPassword’}
     BackupToAAD-BitLockerKeyProtector -MountPoint “C:” -KeyProtectorId $BackupPassword.KeyProtectorId -ErrorAction SilentlyContinue
     
+    start-sleep -s 5
+    
     $bitlockerStatus = Get-BitLockerVolume $env:SystemDrive -ErrorAction Stop | select -ExpandProperty VolumeStatus
     if ($bitlockerStatus -eq "EncryptionInProgress" -or $bitlockerStatus -eq "FullyEncrypted") { 
         Log -Message "Bitlocker geconfigureerd. Op de achtergrond zal hij gaan encrypten." -Type "ok"
