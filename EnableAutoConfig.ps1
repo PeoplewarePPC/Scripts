@@ -1,4 +1,4 @@
-﻿#region logging
+#region logging
 Function Log {
 	<#
 	.EXAMPLE
