@@ -24,7 +24,7 @@ if(-not(Test-Path $strPPC_LOG)) {
 }
 
 Try {
-    Enable-BitLocker -MountPoint "C:" -EncryptionMethod XtsAes128 -ErrorAction stop -UsedSpaceOnly -RecoveryPasswordProtector 
+    Enable-BitLocker -MountPoint "C:" -EncryptionMethod XtsAes128 -ErrorAction stop -UsedSpaceOnly -RecoveryPasswordProtector -SkipHardwareTest
     $BLV = Get-BitLockerVolume -MountPoint “C:” | select *
     $BackupPassword = $BLV.KeyProtector |Where {$_.KeyProtectorType -eq ‘RecoveryPassword’}
     BackupToAAD-BitLockerKeyProtector -MountPoint “C:” -KeyProtectorId $BackupPassword.KeyProtectorId -ErrorAction Stop
