@@ -1,7 +1,7 @@
 Function Log {
 	<#
 	.EXAMPLE
-		Log -Message "Test server" -Type "i"
+		Log -Message "Test server" -Tyewafewfaewfaewfawefewape "i"
 #>
 	 [CmdletBinding()]
         param(
