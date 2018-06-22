@@ -75,6 +75,8 @@ Function Log {
 }
 
 
+############################################ VERSIONING, LOGGING - IMPORTANT! ####################################################
+#Wordt gebruikt om regkey te plaatsen zodat we kunnen sturen op wanneer een script moet draaien of niet.
 
 #Aanmaken van map C:\PPC_Logs (als deze nog niet bestaat) waar de logs worden weggeschreven.
 $strPPC_LOG = "C:\Program Files\PeopleWare\PPC_Logs"
@@ -85,42 +87,75 @@ if(-not(Test-Path $strPPC_LOG)) {
     New-Item $strPPC_LOG -ItemType container
 }
 
+#Onderstaande wordt gebruikt om register sleutel weg te schrijven
+$registryPath = "HKCU:\Software\PeopleWare\OneDriveFolderRedirect"
+$Name_VersionNumber = "VersionNumber"
+$Value_VersionNumber = "0001"
+$Name_LastRunTimeSuccess = "LastRunTimeSuccess"
 
-#Kijken of OneDrive al is ingericht d.m.v. de andere scriptjes. Als dat niet zo is dan failed hij waardoor Intune hem later weer opnieuw afvuurt aangezien dan wellicht wel de andere scriptjes hebben gedraaid.
-$Notdone = $true
-
-DO {
-    $ONEDRIVESYNC = Get-ItemPropertyValue -Path 'HKCU:\Software\Microsoft\OneDrive\Accounts\Business1' -Name 'UserFolder'
-
-    if ($ONEDRIVESYNC)  {
-        $Notdone = $false
+Try {
+    if(!(Test-Path $registryPath)) {
+        New-Item -Path $registryPath -Force | Out-Null
     }
-} While ($Notdone)
-
-
-if ($ONEDRIVESYNC) {
-    #Als de gebruiker al een keer succesvol OneDrive heeft ingericht en dus de mappen al heeft met eventueel data erin dan zou hij normaal gesproken failen. Maar door onderstaande stuk code 
-    #zal hij de bestaande mappen renamen naar MAPNAAM1 zodat hij opnieuw de Folder Redirection kan koppelen en dus de mappen kan aanmaken. 
-
-    
-    Try {
-        #Aanmaken van de mappen in OneDrive
-        Set-KnownFolderPath -KnownFolder 'Desktop' -Path "$ONEDRIVESYNC\Desktop"
-        Set-KnownFolderPath -KnownFolder 'Documents' -Path "$ONEDRIVESYNC\Documents"
-        Set-KnownFolderPath -KnownFolder 'Pictures' -Path "$ONEDRIVESYNC\Pictures"
-        Set-KnownFolderPath -KnownFolder 'Favorites' -Path "$ONEDRIVESYNC\Favorites"
-        Set-KnownFolderPath -KnownFolder 'Videos' -Path "$ONEDRIVESYNC\Videos"
-
-        Log -Message "Default folders zijn succesvol aangemaakt" -Type "ok"
-    } Catch {
-        $strFoutmelding = $error[0]
-        Log -Message "Fout bij het aanmaken van de default folders. Foutmelding: $strFoutmelding" -Type "error" 
-    } 
-
-    Log -Message "OneDrive folder redirection is succesvol ingericht." -Type "ok"
-    New-Item $strPPC_LOG_PPC_configuratie -ItemType file
-
-} else {
+}Catch{
     $strFoutmelding = $error[0]
-    Log -Message "OneDrive map niet gevonden in het register, enable OneDrive script heeft hoogstwaarschijnlijk niet gedraaid. Foutmelding: $strFoutmelding" -Type "error"
+    Log -Message "Fout bij het aanmaken van de registerkey $registryPath. Foutmelding: $strFoutmelding" -Type "error" 
+}
+
+###################################################################################################################################
+
+#Als het versienummer in het register lager is dan de versienummer van dit script (dus een nieuwere versie) OF de output status van de vorig gedraaide result op false staat (dus gefailed) voer het script dan uit.
+If((Get-ItemProperty $registryPath | Select-Object -ExpandProperty VersionNumber) -lt $Value_VersionNumber -or (Get-ItemProperty $registryPath | Select-Object -ExpandProperty LastRunTimeSuccess) -eq "false") {
+
+    Try{
+        New-ItemProperty -Path $registryPath -Name $Name_VersionNumber -Value 0002 -PropertyType STRING -Force | Out-Null    
+    } Catch {
+        Log -Message "Fout bij het aanmaken van de registerkey $Name_VersionNumber. Foutmelding: $strFoutmelding" -Type "error" 
+    }
+
+
+    #Kijken of OneDrive al is ingericht d.m.v. de andere scriptjes. Als dat niet zo is dan failed hij waardoor Intune hem later weer opnieuw afvuurt aangezien dan wellicht wel de andere scriptjes hebben gedraaid.
+    $Notdone = $true
+
+    DO {
+        $ONEDRIVESYNC = Get-ItemPropertyValue -Path 'HKCU:\Software\Microsoft\OneDrive\Accounts\Business1' -Name 'UserFolder'
+
+        if ($ONEDRIVESYNC)  {
+            $Notdone = $false
+        }
+    } While ($Notdone)
+
+
+    if ($ONEDRIVESYNC) {
+        #Als de gebruiker al een keer succesvol OneDrive heeft ingericht en dus de mappen al heeft met eventueel data erin dan zou hij normaal gesproken failen. Maar door onderstaande stuk code 
+        #zal hij de bestaande mappen renamen naar MAPNAAM1 zodat hij opnieuw de Folder Redirection kan koppelen en dus de mappen kan aanmaken. 
+    
+        Try {
+            #Aanmaken van de mappen in OneDrive
+            Set-KnownFolderPath -KnownFolder 'Desktop' -Path "$ONEDRIVESYNC\Desktop"
+            Set-KnownFolderPath -KnownFolder 'Documents' -Path "$ONEDRIVESYNC\Documents"
+            Set-KnownFolderPath -KnownFolder 'Pictures' -Path "$ONEDRIVESYNC\Pictures"
+            Set-KnownFolderPath -KnownFolder 'Favorites' -Path "$ONEDRIVESYNC\Favorites"
+            Set-KnownFolderPath -KnownFolder 'Videos' -Path "$ONEDRIVESYNC\Videos"
+
+            Log -Message "Default folders zijn succesvol aangemaakt" -Type "ok"
+        } Catch {
+            $strFoutmelding = $error[0]
+            Log -Message "Fout bij het aanmaken van de default folders. Foutmelding: $strFoutmelding" -Type "error" 
+        } 
+
+        Log -Message "OneDrive folder redirection is succesvol ingericht." -Type "ok"
+        New-Item $strPPC_LOG_PPC_configuratie -ItemType file
+
+    } else {
+        $strFoutmelding = $error[0]
+        Log -Message "OneDrive map niet gevonden in het register, enable OneDrive script heeft hoogstwaarschijnlijk niet gedraaid. Foutmelding: $strFoutmelding" -Type "error"
+    }
+
+    if($strFoutmelding) {
+        New-ItemProperty -Path $registryPath -Name $Name_LastRunTimeSuccess -Value "false" -PropertyType STRING -Force | Out-Null
+    } 
+    else {
+        New-ItemProperty -Path $registryPath -Name $Name_LastRunTimeSuccess -Value "true" -PropertyType STRING -Force | Out-Null
+    }
 }
